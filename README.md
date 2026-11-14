@@ -1,5 +1,4 @@
 # mirea
-
 import sqlite3
 
 db = sqlite3.connect("tasks.db")
@@ -9,13 +8,14 @@ db.execute("CREATE TABLE IF NOT EXISTS tasks (id INTEGER PRIMARY KEY, user_id IN
 user = None
 
 print("Привет! Рад тебя видеть.")
+print("Команды: рег, вход, стоп")
 
 while True:
     if user is None:
-        choice = input("Что хочешь сделать? ")
-        if choice == "регистрация":
-            login = input("Придумай логин: ")
-            password = input("Придумай пароль: ")
+        choice = input("> ")
+        if choice == "рег":
+            login = input("Логин: ")
+            password = input("Пароль: ")
             db.execute("INSERT INTO users (login, password) VALUES (?, ?)", (login, password))
             db.commit()
             print(f"Готово, {login} зарегистрирован!")
@@ -30,12 +30,13 @@ while True:
                 print("Не получилось войти, проверь логин и пароль.")
             else:
                 print(f"Добро пожаловать, {login}!")
-        elif choice == "выход":
+        elif choice == "стоп":
             break
     else:
-        choice = input("Что дальше? ")
+        print("Команды: добавить, задачи, выйти, /я, стоп")
+        choice = input("> ")
         if choice == "добавить":
-            title = input("Какая задача? ")
+            title = input("Задача: ")
             db.execute("INSERT INTO tasks (user_id, title) VALUES (?, ?)", (user[0], title))
             db.commit()
             print("Задача добавлена.")
@@ -46,13 +47,16 @@ while True:
             for (title,) in rows:
                 print("-", title)
         elif choice == "/я":
-            print(f"Твой логин: {user[1]}")
-            print(f"Твой пароль: {user[2]}")
+            print(f"Логин: {user[1]}")
+            print(f"Пароль: {user[2]}")
         elif choice == "выйти":
             print("Пока! Ты вышел из аккаунта.")
             user = None
-        elif choice == "выход":
+        elif choice == "стоп":
             break
 
 db.close()
 print("До встречи!")
+
+
+            
