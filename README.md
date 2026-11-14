@@ -4,46 +4,55 @@ import sqlite3
 
 db = sqlite3.connect("tasks.db")
 db.execute("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, login TEXT UNIQUE, password TEXT)")
-db.execute("CREATE TABLE IF NOT EXISTS tasks (id INTEGER PRIMARY KEY, user_id INTEGER, title TEXT, done INTEGER DEFAULT 0)")
-user = None  # (id, login, password)
+db.execute("CREATE TABLE IF NOT EXISTS tasks (id INTEGER PRIMARY KEY, user_id INTEGER, title TEXT)")
+
+user = None
+
+print("Привет! Рад тебя видеть.")
 
 while True:
     if user is None:
-        print("1 - регистрация, 2 - вход, 0 - выход")
-        choice = input("Выбор: ").strip()
-        if choice in ("1", "2"):
-            login = input("Логин: ").strip()
-            password = input("Пароль: ").strip()
-            if choice == "1":
-                try:
-                    db.execute("INSERT INTO users (login, password) VALUES (?, ?)", (login, password))
-                    db.commit()
-                    print("Готово.")
-                except sqlite3.IntegrityError:
-                    print("Логин занят.")
+        choice = input("Что хочешь сделать? ")
+        if choice == "регистрация":
+            login = input("Придумай логин: ")
+            password = input("Придумай пароль: ")
+            db.execute("INSERT INTO users (login, password) VALUES (?, ?)", (login, password))
+            db.commit()
+            print(f"Готово, {login} зарегистрирован!")
+        elif choice == "вход":
+            login = input("Логин: ")
+            password = input("Пароль: ")
+            user = db.execute(
+                "SELECT id, login, password FROM users WHERE login = ? AND password = ?",
+                (login, password),
+            ).fetchone()
+            if user is None:
+                print("Не получилось войти, проверь логин и пароль.")
             else:
-                user = db.execute("SELECT id, login, password FROM users WHERE login = ? AND password = ?", (login, password)).fetchone()
-                print("Вход выполнен." if user else "Неверные данные.")
-        elif choice == "0":
+                print(f"Добро пожаловать, {login}!")
+        elif choice == "выход":
             break
     else:
-        print("1 - добавить, 2 - список, 3 - выполнить, 4 - выйти, /я - мои данные, 0 - выход")
-        choice = input("Выбор: ").strip()
-        if choice == "1":
-            db.execute("INSERT INTO tasks (user_id, title) VALUES (?, ?)", (user[0], input("Задача: ").strip()))
+        choice = input("Что дальше? ")
+        if choice == "добавить":
+            title = input("Какая задача? ")
+            db.execute("INSERT INTO tasks (user_id, title) VALUES (?, ?)", (user[0], title))
             db.commit()
-        elif choice == "2":
-            for tid, title, done in db.execute("SELECT id, title, done FROM tasks WHERE user_id = ?", (user[0],)):
-                print(f"{tid}: [{'✓' if done else ' '}] {title}")
-        elif choice == "3":
-            cur = db.execute("UPDATE tasks SET done = 1 WHERE id = ? AND user_id = ?", (input("id: ").strip(), user[0]))
-            db.commit()
-            print("Отмечено." if cur.rowcount else "Нет такой задачи.")
-        elif choice == "4":
-            user = None
+            print("Задача добавлена.")
+        elif choice == "задачи":
+            rows = db.execute("SELECT title FROM tasks WHERE user_id = ?", (user[0],)).fetchall()
+            if not rows:
+                print("Пока задач нет.")
+            for (title,) in rows:
+                print("-", title)
         elif choice == "/я":
-            print(f"Логин: {user[1]}\nПароль: {user[2]}")
-        elif choice == "0":
+            print(f"Твой логин: {user[1]}")
+            print(f"Твой пароль: {user[2]}")
+        elif choice == "выйти":
+            print("Пока! Ты вышел из аккаунта.")
+            user = None
+        elif choice == "выход":
             break
 
 db.close()
+print("До встречи!")
